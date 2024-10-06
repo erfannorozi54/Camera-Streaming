@@ -88,7 +88,7 @@ class CameraManager():
             if len(self.cameras) != 0:
                 # Loop over all cameras and check if they already have tasks
                 for camera in self.cameras:
-                    if camera.IP not in self.camera_tasks.keys() or self.camera_tasks[camera].done():
+                    if camera.IP not in self.camera_tasks.keys() or self.camera_tasks[camera.IP].done():
                         logger.info(f"in if and {camera.IP not in self.camera_tasks.keys()}")
                         # Create a new task for the camera's `get_stream` method if none exists or the previous one is done
                         print(f"Creating stream task for camera {camera.IP}")
@@ -161,7 +161,7 @@ class Camera():
     async def get_stream(self,isSocketConnected,socket):
         logger.info(isSocketConnected)
         loop = asyncio.get_event_loop()
-        frame_conuter = 0
+        frame_counter = 0
         skip_factor = 30
         while True:
             print(isSocketConnected)
@@ -169,12 +169,6 @@ class Camera():
 
             # Run the blocking stream.read() in an executor to avoid blocking the event loop
             ret, frame = await loop.run_in_executor(None, self.stream.read)
-            frame_counter += 1
-            if frame_counter % skip_factor != 0:
-                # Display the frame
-                continue
-
-
             if not ret:
                 print("Failed to get frame, exiting stream.")
                 self.bad_frames += 1
@@ -182,6 +176,14 @@ class Camera():
                     raise RuntimeError("Too many bad frames encountered (10). Stream is invalid.")
                 else:
                     pass
+
+            frame_counter += 1
+            if frame_counter % skip_factor != 0:
+                # Display the frame
+                continue
+
+
+            
             # Process the frame (e.g., display, save, or stream it)
             logger.info(f'Got a frame from the camera {self.name} and ret is {ret}')
             if isSocketConnected:
